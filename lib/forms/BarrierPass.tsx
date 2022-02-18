@@ -54,7 +54,7 @@ const inputs: FormDisplayProps<InputTypes>['inputs'] = {
     inputType: 'button',
     children: 'Enviar',
     type: 'submit',
-    variant: 'contained'
+    variant: 'outlined'
   }
 } as const
 
