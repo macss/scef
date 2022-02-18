@@ -84,14 +84,14 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
             />
           )
         case 'text-field':
-          <TextField 
+          return (<TextField 
                 {...commonProps} 
                 {...inputProps} 
                 key={key} 
                 name={inputName} 
                 error={(errors && errors[inputName]) ? true : undefined} 
                 helperText={helperText}
-              />
+              />)
         default:
           break;
       }
