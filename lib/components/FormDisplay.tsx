@@ -4,7 +4,8 @@ import {
   SelectProps, 
   MenuItem,
   Button, 
-  ButtonProps, 
+  ButtonTypeMap,
+  ExtendButtonBase, 
   Checkbox, 
   CheckboxProps, 
   TextField, 
@@ -21,23 +22,15 @@ import Head from 'next/head';
 
 import { SxProps, Theme } from '@mui/material/styles';
 
-export type InputTypes = 'select' | 'button' | 'checkbox' | 'radio' | 'text-field'
-
-const inputMapping: Record<InputTypes, (props: { sx?: SxProps<Theme> } & Record<any, any> ) => JSX.Element> = {
-  select: Select,
-  button: Button,
-  checkbox: Checkbox,
-  radio: Radio,
-  'text-field': TextField
-}
+export type InputTypes = 'select' | 'button' | 'text-field' // | 'checkbox' | 'radio' |
 
 type InputPropsMapping = {
   'select': SelectProps & {
     options: Record<string, any>
   },
-  'button': ButtonProps,
-  'checkbox': CheckboxProps,
-  'radio': RadioProps,
+  'button': ExtendButtonBase<ButtonTypeMap<{}, 'button'>>,
+  //'checkbox': CheckboxProps,
+  //'radio': RadioProps,
   'text-field': TextFieldProps,
 }
 
@@ -56,7 +49,6 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
 
   useEffect(() => {
     const newInputs = Object.entries(inputs).map(([inputName, {inputType, ...inputProps}], key) => {
-      const Input = inputMapping[inputType]
       const commonProps: { sx?: SxProps<Theme> } & Record<any, any> = {
         fullWidth: true,
         sx: {
@@ -66,37 +58,33 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
       }
       const helperText = (errors && errors[inputName]) ? errors[inputName].message : (inputProps as any).helperText ?? ''
 
-      if (inputType === 'select') {
-        const { options, ...rest } = inputProps as unknown as InputPropsMapping['select']
-        const id = `select-${key}-label`
+      switch (inputType) {
+        case 'select':
+          const { options, ...rest } = inputProps as unknown as InputPropsMapping['select']
+          const id = `select-${key}-label`
 
-        return (
-          <FormControl {...commonProps}>
-            <InputLabel id={id}>{rest?.label}</InputLabel>
-            <Input {...rest} key={key} labelId={id} name={inputName}>
-              {
-                Object.entries(options).map(([name, value]) => 
-                  <MenuItem key={name} value={value}>{name}</MenuItem>
-                )
-              }
-            </Input>
-          </FormControl>
-        )
-      }
-
-      if (inputType === 'button') {
-        return (
-          <Input 
-            {...commonProps} 
-            {...inputProps} 
-            key={key} 
-            name={inputName} 
-            error={(errors && errors[inputName]) ? true : undefined} 
-          />
-        )
-      }
-
-      return <Input 
+          return (
+            <FormControl {...commonProps}>
+              <InputLabel id={id}>{rest?.label}</InputLabel>
+              <Select {...rest} key={key} labelId={id} name={inputName}>
+                {
+                  Object.entries(options).map(([name, value]) => 
+                    <MenuItem key={name} value={value}>{name}</MenuItem>
+                  )
+                }
+              </Select>
+            </FormControl>
+          )
+        case 'button':
+          return (
+            <Button 
+              {...commonProps} 
+              {...inputProps} 
+              key={key} 
+            />
+          )
+        case 'text-field':
+          <TextField 
                 {...commonProps} 
                 {...inputProps} 
                 key={key} 
@@ -104,6 +92,9 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
                 error={(errors && errors[inputName]) ? true : undefined} 
                 helperText={helperText}
               />
+        default:
+          break;
+      }
     })
 
     setFormInputs(newInputs)
