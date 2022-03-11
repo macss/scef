@@ -1,16 +1,16 @@
-export enum USER_ACCESS_TYPE {
+export enum UserAccessType {
   'Usuário',
   'Aprovador',
   'Admnistrador'
 } 
 
-export enum USER_STATUS {
+export enum UserStatus {
   'Aguardando Aprovação',
   'Aprovado',
   'Reprovado'
 }
 
-export enum USER_TYPE {
+export enum UserType {
   'Indefinido',
   'Interno',
   'Externo'
@@ -18,8 +18,8 @@ export enum USER_TYPE {
 
 export default interface User {
   email: string | null
-  access_type: USER_ACCESS_TYPE
-  status: USER_STATUS
+  access_type: UserAccessType
+  status: UserStatus
   uid: string
-  type: USER_TYPE
+  type: UserType
 }

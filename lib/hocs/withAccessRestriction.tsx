@@ -1,6 +1,6 @@
 import UserContext from '@lib/conxtexts/userContext';
-import { USER_ACCESS_TYPE } from '@lib/models/user';
-import readData from '@lib/services/readData';
+import { UserAccessType } from '@lib/models/user';
+import readData, { ReadDataResultCodes } from '@lib/services/readData';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react'
 
@@ -9,12 +9,12 @@ type PropsAreEqual<P> = (
   nextProps: Readonly<P>
 ) => boolean;
 
-const withAccessRestricion = <P extends {}>(
+const withAccessRestricion = <P extends { loading: boolean }>(
   component: {
     (props: P): Exclude<React.ReactNode, undefined>;
     displayName?: string;
+    accessLevel: UserAccessType
   },
-  access: USER_ACCESS_TYPE,
   propsAreEqual?: PropsAreEqual<P> | false,
 
   componentName = component.displayName ?? component.name
@@ -31,22 +31,16 @@ const withAccessRestricion = <P extends {}>(
     useEffect(() => {
       readData('users', user?.uid ?? '')
         .then(result => {
-          if (result.code === 'SUCCESS' && result.data.access_type < access) {
-            console.log('bloqueado')
+          if (result.code === ReadDataResultCodes['SUCCESS'] && result.data.access_type < component.accessLevel) {
             router.push('/')
           }
           setLoading(false)
         })
     }, [user, router])
 
-    if (loading) {
-      return (
-        <div>Carregando...</div>
-      )
-    }
 
     //Do something special to justify the HoC.
-    return component(props) as JSX.Element;
+    return component({...props, loading}) as JSX.Element;
   }
 
   WithAccessRestriction.displayName = `withAccessRestriction(${componentName})`;

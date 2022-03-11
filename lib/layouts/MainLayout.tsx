@@ -1,6 +1,6 @@
-import { onAuthStateChanged, signOut, User as UserData } from '@firebase/auth';
+import { onAuthStateChanged, signOut, Unsubscribe, User as UserData } from '@firebase/auth';
 import { Link } from '@lib/components';
-import { USER_STATUS } from '@lib/models/user';
+import { UserStatus } from '@lib/models/user';
 import readData from '@lib/services/readData';
 import { Check, ExitToApp, ExpandLess, Inbox, Mail, Menu, ViewList } from '@mui/icons-material';
 import { 
@@ -25,6 +25,7 @@ import React, { useEffect, useState } from 'react'
 import User from '@lib/models/user'
 import routes from 'routes';
 import UserContext from '@lib/conxtexts/userContext';
+import listenToData, { ListenToDataResultCodes } from '@lib/services/listenToData';
 
 const drawerWidth = 240;
 
@@ -39,6 +40,9 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
   const handleDrawerToggle = () => setMobileOpen(v => !v)
   const handleFormsToggle = () => setFormsOpen(v => !v)
 
+  /**
+   * Checks if there is a user logged in
+   */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -46,19 +50,34 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
         router.push('/login')
       } else {
         setUserData(user)
-        readData('users', user.uid)
-          .then(result => {
-            setUser(result.data)
-            setLoading(false)
-          })
       }
     })
 
     return unsubscribe
   }, [router])
 
+  /**
+   * Fetchs user permissions in db
+   */
   useEffect(() => {
-    if (user && user.status !== USER_STATUS.Aprovado)
+    let unsubscribe: Unsubscribe = () => {}
+    if (userData)
+      listenToData('users', userData.uid, (userInfo) => {
+        setUser(userInfo)
+        setLoading(false)
+      }).then(result => {
+        if (result.code === ListenToDataResultCodes.SUCCESS)
+          unsubscribe = result.unsubscribe
+      })
+
+    return unsubscribe
+  }, [userData])
+
+  /**
+   * Redirect user if not approved
+   */
+  useEffect(() => {
+    if (user && user.status !== UserStatus.Aprovado)
       router.push('/')
   }, [user, router])
 
@@ -70,7 +89,7 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
         </Typography>
       </Toolbar>
       <Divider />
-      {user?.status == USER_STATUS.Aprovado && <><List>
+      {user?.status == UserStatus.Aprovado && <><List>
         <ListItemButton component={Link} href="/forms/approvals">
           <ListItemIcon>
             <Check />
@@ -193,7 +212,7 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
       >
         <Toolbar />
         <UserContext.Provider value={{ user: userData }}>
-          {loading ? <Box><Skeleton /><Skeleton /><Skeleton /></Box>: user?.status === USER_STATUS.Aprovado ? children :
+          {loading ? <Box><Skeleton /><Skeleton /><Skeleton /></Box>: user?.status === UserStatus.Aprovado ? children :
           <div>
             Seu acesso ao sistema ainda não foi liberado, entre em contato com um administrador para liberar o acesso.
           </div>

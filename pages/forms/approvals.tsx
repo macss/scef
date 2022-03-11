@@ -1,6 +1,8 @@
 import React from 'react'
 import { Container, Paper } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import withAccessRestricion from '@lib/hocs/withAccessRestriction';
+import { UserAccessType } from '@lib/models/user';
 
 const columns: GridColDef[] = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -65,5 +67,9 @@ const Approvals = () => {
 }
 
 Approvals.displayName = 'Aprovações'
+Approvals.accessLevel = UserAccessType['Aprovador']
+
+const ApprovalsWithAccessRestriction = withAccessRestricion(Approvals)
+ApprovalsWithAccessRestriction.displayName = Approvals.displayName
 
 export default Approvals

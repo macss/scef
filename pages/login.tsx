@@ -1,7 +1,7 @@
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from '@firebase/auth';
-import { USER_ACCESS_TYPE, USER_STATUS, USER_TYPE } from '@lib/models/user';
+import { UserAccessType, UserStatus, UserType } from '@lib/models/user';
 import addData from '@lib/services/addData';
-import readData from '@lib/services/readData';
+import readData, { ReadDataResultCodes } from '@lib/services/readData';
 import { Google } from '@mui/icons-material';
 import { Button, Container } from '@mui/material';
 import { auth } from 'config/firebaseConfig';
@@ -33,13 +33,13 @@ const Login = () => {
 
         readData('users', user.uid)
           .then(result => {
-            if (result.code === 'NOT REGISTERED') {
+            if (result.code === ReadDataResultCodes['NOT REGISTERED']) {
               addData({
                 email: user.email,
-                access_type: USER_ACCESS_TYPE['Usuário'],
-                status: USER_STATUS['Aguardando Aprovação'],
+                access_type: UserAccessType['Usuário'],
+                status: UserStatus['Aguardando Aprovação'],
                 uid: user.uid,
-                type: USER_TYPE['Indefinido']
+                type: UserType['Indefinido']
               }, 'users')
             }
           })
