@@ -6,6 +6,7 @@ import {
   Button, 
   ButtonTypeMap,
   ExtendButtonBase, 
+  FormHelperText,
   Checkbox, 
   CheckboxProps, 
   TextField, 
@@ -66,13 +67,20 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
           return (
             <FormControl {...commonProps}>
               <InputLabel id={id}>{rest?.label}</InputLabel>
-              <Select {...rest} key={key} labelId={id} name={inputName}>
+              <Select 
+                {...rest} 
+                key={key} 
+                labelId={id} 
+                name={inputName} 
+                error={(errors && errors[inputName]) ? true : undefined} 
+              >
                 {
                   Object.entries(options).map(([name, value]) => 
                     <MenuItem key={name} value={value}>{name}</MenuItem>
                   )
                 }
               </Select>
+              {helperText !== '' && <FormHelperText>{helperText}</FormHelperText>}
             </FormControl>
           )
         case 'button':
@@ -84,7 +92,8 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
             />
           )
         case 'text-field':
-          return (<TextField 
+          return (
+              <TextField 
                 {...commonProps} 
                 {...inputProps} 
                 key={key} 

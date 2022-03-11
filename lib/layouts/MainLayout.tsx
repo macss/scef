@@ -1,31 +1,66 @@
+import { onAuthStateChanged, signOut, User as UserData } from '@firebase/auth';
 import { Link } from '@lib/components';
-import { ExpandLess, Inbox, Mail, Menu, ViewList } from '@mui/icons-material';
+import { USER_STATUS } from '@lib/models/user';
+import readData from '@lib/services/readData';
+import { Check, ExitToApp, ExpandLess, Inbox, Mail, Menu, ViewList } from '@mui/icons-material';
 import { 
   AppBar, 
+  Avatar, 
   Box, 
   Collapse, 
   Divider, 
   Drawer, 
   IconButton, 
   List, 
-  ListItem, 
+  ListItemButton, 
   ListItemIcon, 
   ListItemText, 
+  Skeleton, 
   Toolbar, 
   Typography 
 } from '@mui/material';
-import React, { useState } from 'react'
+import { auth } from 'config/firebaseConfig';
+import { useRouter } from 'next/router';
+import React, { useEffect, useState } from 'react'
+import User from '@lib/models/user'
 import routes from 'routes';
+import UserContext from '@lib/conxtexts/userContext';
 
 const drawerWidth = 240;
 
 const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [formsOpen, setFormsOpen] = useState(false)
+  const [formsOpen, setFormsOpen] = useState(true)
+  const [user, setUser] = useState<User>()
+  const [userData, setUserData] = useState<UserData>()
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const handleDrawerToggle = () => setMobileOpen(v => !v)
   const handleFormsToggle = () => setFormsOpen(v => !v)
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setLoading(false)
+        router.push('/login')
+      } else {
+        setUserData(user)
+        readData('users', user.uid)
+          .then(result => {
+            setUser(result.data)
+            setLoading(false)
+          })
+      }
+    })
+
+    return unsubscribe
+  }, [router])
+
+  useEffect(() => {
+    if (user && user.status !== USER_STATUS.Aprovado)
+      router.push('/')
+  }, [user, router])
 
   const drawer = (
     <div>
@@ -35,19 +70,25 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
         </Typography>
       </Toolbar>
       <Divider />
-      <List>
+      {user?.status == USER_STATUS.Aprovado && <><List>
+        <ListItemButton component={Link} href="/forms/approvals">
+          <ListItemIcon>
+            <Check />
+          </ListItemIcon>
+          <ListItemText primary="Aprovações"/>
+        </ListItemButton>
         {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-          <ListItem button key={text}>
+          <ListItemButton key={text}>
             <ListItemIcon>
               {index % 2 === 0 ? <Inbox /> : <Mail />}
             </ListItemIcon>
             <ListItemText primary={text} />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
       <Divider />
       <List>
-        <ListItem button onClick={handleFormsToggle}>
+        <ListItemButton onClick={handleFormsToggle}>
           <ListItemIcon>
             <ViewList />
           </ListItemIcon>
@@ -60,17 +101,17 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
               })
             }} 
           />
-        </ListItem>
+        </ListItemButton>
         <Collapse in={formsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {routes.sort((a,b) => a.slug.localeCompare(b.slug)).map(route => (
-              <ListItem button sx={{ pl: 4 }} key={route.slug} component={Link} href={`/forms/${route.slug}`}>
+              <ListItemButton sx={{ pl: 4 }} key={route.slug} component={Link} href={`/forms/${route.slug}`}>
                 <ListItemText primary={route.component.displayName} />
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Collapse>
-      </List>
+      </List></>}
     </div>
   );
 
@@ -96,9 +137,16 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
           >
             <Menu />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{flexGrow: 1}}>
             Sistema de Controle e Emissão de Formulários
-          </Typography>
+          </Typography>   
+          <Avatar 
+            alt={userData?.displayName ?? 'Anonymous'}
+            src={userData?.photoURL ?? ''}
+          />       
+          <IconButton onClick={() => signOut(auth)} color="inherit">
+            <ExitToApp />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Box
@@ -144,7 +192,13 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
       }}
       >
         <Toolbar />
-        {children}
+        <UserContext.Provider value={{ user: userData }}>
+          {loading ? <Box><Skeleton /><Skeleton /><Skeleton /></Box>: user?.status === USER_STATUS.Aprovado ? children :
+          <div>
+            Seu acesso ao sistema ainda não foi liberado, entre em contato com um administrador para liberar o acesso.
+          </div>
+          }
+        </UserContext.Provider>
       </Box>
     </Box>
   );

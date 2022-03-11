@@ -7,7 +7,7 @@ const inputs: FormDisplayProps<InputTypes>['inputs'] = {
   'destinatario': {
     inputType: 'text-field',
     label: 'Destinatário',
-    helperText: 'Para quem o documento está sendo enviado?',
+    helperText: 'Para quem o material está sendo enviado?',
   },
   'veiculo': {
     inputType: 'text-field',
