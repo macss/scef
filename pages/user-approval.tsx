@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import withAccessRestricion from '@lib/hocs/withAccessRestriction'
 import User, { UserAccessType, UserStatus, UserType } from '@lib/models/user'
-import { fetchUnapprovedUsers, FetchUnapprovedUsersResultCodes } from '@lib/services/fetchUnapprovedUsers'
+import { fetchUsers, FetchUsersResultCodes } from '@lib/services/fetchUsers'
 import { Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material'
 import { Check, Close, Restore } from '@mui/icons-material'
 import { Unsubscribe } from '@firebase/util'
 import updateUserData from '@lib/services/updateUserData'
+import UserContext from '@lib/conxtexts/userContext'
 
 interface UserApprovalPageProps {
   loading: boolean
@@ -16,13 +17,14 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
   const [open, setOpen] = useState(false);
 
   const [currentUser, setCurrentUser] = useState<User>()
+  const { user: loggedUser } = useContext(UserContext)
 
   useEffect(() => {
     let unsubscribe: Unsubscribe = () => {};
-    fetchUnapprovedUsers((users) => {
+    fetchUsers((users) => {
       setUnapprovedUsers(users)
     }).then(result => {
-      if (result.status === FetchUnapprovedUsersResultCodes.Success)
+      if (result.status === FetchUsersResultCodes.Success)
         unsubscribe = result.unsubscribe as Unsubscribe
     })
 
@@ -61,14 +63,18 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
   const rejectUser = (user: User) => {
     updateUserData({
       ...user,
-      status: UserStatus.Reprovado
+      status: UserStatus.Reprovado,
+      access_type: UserAccessType.Usuário,
+      type: UserType.Indefinido
     })
   }
   
   const restoreUser = (user: User) => {
     updateUserData({
       ...user,
-      status: UserStatus['Aguardando Aprovação']
+      status: UserStatus['Aguardando Aprovação'],
+      access_type: UserAccessType.Usuário,
+      type: UserType.Indefinido
     })
   }
   
@@ -109,6 +115,41 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
                         <Check />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="Reprovar">
+                      <IconButton color="error" onClick={() => rejectUser(user)}>
+                        <Close />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            }
+          </TableBody>
+        </Table>
+
+        <Typography variant="h5" sx={{mt: 4}}>
+          Usuários Ativos
+        </Typography>
+        <Divider />
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>E-mail</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Ações</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {
+              unapprovedUsers?.filter(user => user.status === UserStatus['Aprovado'] && user.email !== loggedUser?.email).map((user, idx) => (
+                <TableRow key={user.uid}>
+                  <TableCell component="th" scope="row">
+                    {idx+1}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{UserStatus[user.status]}</TableCell>
+                  <TableCell>
                     <Tooltip title="Reprovar">
                       <IconButton color="error" onClick={() => rejectUser(user)}>
                         <Close />

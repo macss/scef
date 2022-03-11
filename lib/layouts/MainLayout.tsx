@@ -8,6 +8,7 @@ import {
   Avatar, 
   Box, 
   Collapse, 
+  Container, 
   Divider, 
   Drawer, 
   IconButton, 
@@ -15,7 +16,6 @@ import {
   ListItemButton, 
   ListItemIcon, 
   ListItemText, 
-  Skeleton, 
   Toolbar, 
   Typography 
 } from '@mui/material';
@@ -73,14 +73,6 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
     return unsubscribe
   }, [userData])
 
-  /**
-   * Redirect user if not approved
-   */
-  useEffect(() => {
-    if (user && user.status !== UserStatus.Aprovado)
-      router.push('/')
-  }, [user, router])
-
   const drawer = (
     <div>
       <Toolbar>
@@ -133,6 +125,14 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
       </List></>}
     </div>
   );
+
+  if (loading) {
+    return (
+      <Container>
+        Carregando...
+      </Container>
+    )
+  }
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -212,7 +212,7 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
       >
         <Toolbar />
         <UserContext.Provider value={{ user: userData }}>
-          {loading ? <Box><Skeleton /><Skeleton /><Skeleton /></Box>: user?.status === UserStatus.Aprovado ? children :
+          {user?.status === UserStatus.Aprovado ? children :
           <div>
             Seu acesso ao sistema ainda não foi liberado, entre em contato com um administrador para liberar o acesso.
           </div>

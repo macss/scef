@@ -1,6 +1,7 @@
+import { Unsubscribe } from '@firebase/util';
 import UserContext from '@lib/conxtexts/userContext';
 import { UserAccessType } from '@lib/models/user';
-import readData, { ReadDataResultCodes } from '@lib/services/readData';
+import listenToData, { ListenToDataResultCodes } from '@lib/services/listenToData';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react'
 
@@ -27,16 +28,25 @@ const withAccessRestricion = <P extends { loading: boolean }>(
     const [loading, setLoading] = useState(true)
     const { user } = useContext(UserContext)
     const router = useRouter()
-    
-    useEffect(() => {
-      readData('users', user?.uid ?? '')
-        .then(result => {
-          if (result.code === ReadDataResultCodes['SUCCESS'] && result.data.access_type < component.accessLevel) {
-            router.push('/')
-          }
-          setLoading(false)
-        })
-    }, [user, router])
+
+    /**
+   * Fetchs user permissions in db
+   */
+  useEffect(() => {
+    let unsubscribe: Unsubscribe = () => {}
+    if (user)
+      listenToData('users', user.uid, (userInfo) => {
+        if (userInfo.access_type < component.accessLevel) {
+          router.push('/')
+        }
+        setLoading(false)
+      }).then(result => {
+        if (result.code === ListenToDataResultCodes.SUCCESS)
+          unsubscribe = result.unsubscribe
+      })
+
+    return unsubscribe
+  }, [user, router])
 
 
     //Do something special to justify the HoC.
