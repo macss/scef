@@ -1,12 +1,13 @@
 import { onAuthStateChanged, signOut, Unsubscribe, User as UserData } from '@firebase/auth';
 import { Link } from '@lib/components';
-import { UserStatus } from '@lib/models/user';
+import { UserAccessType, UserStatus } from '@lib/models/user';
 import readData from '@lib/services/readData';
-import { Check, ExitToApp, ExpandLess, Inbox, Mail, Menu, ViewList } from '@mui/icons-material';
+import { Check, ExitToApp, ExpandLess, Inbox, Mail, Menu, Person, ViewList } from '@mui/icons-material';
 import { 
   AppBar, 
   Avatar, 
   Box, 
+  CircularProgress, 
   Collapse, 
   Container, 
   Divider, 
@@ -16,6 +17,7 @@ import {
   ListItemButton, 
   ListItemIcon, 
   ListItemText, 
+  ListSubheader, 
   Toolbar, 
   Typography 
 } from '@mui/material';
@@ -81,58 +83,86 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
         </Typography>
       </Toolbar>
       <Divider />
-      {user?.status == UserStatus.Aprovado && <><List>
-        <ListItemButton component={Link} href="/forms/approvals">
-          <ListItemIcon>
-            <Check />
-          </ListItemIcon>
-          <ListItemText primary="Aprovações"/>
-        </ListItemButton>
-        {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-          <ListItemButton key={text}>
+      {user?.status == UserStatus.Aprovado && 
+      <>
+        <List component="nav">
+          <ListItemButton component={Link} href="/forms/approvals">
             <ListItemIcon>
-              {index % 2 === 0 ? <Inbox /> : <Mail />}
+              <Check />
             </ListItemIcon>
-            <ListItemText primary={text} />
+            <ListItemText primary="Aprovações"/>
           </ListItemButton>
-        ))}
-      </List>
-      <Divider />
-      <List>
-        <ListItemButton onClick={handleFormsToggle}>
-          <ListItemIcon>
-            <ViewList />
-          </ListItemIcon>
-          <ListItemText primary="Formulários" />
-          <ExpandLess 
-            sx={{
-              transform: formsOpen ? 'rotate(-0deg)' : 'rotate(180deg)',
-              transition: theme => theme.transitions.create('transform', {
-                duration: theme.transitions.duration.standard
-              })
-            }} 
-          />
-        </ListItemButton>
-        <Collapse in={formsOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {routes.sort((a,b) => a.slug.localeCompare(b.slug)).map(route => (
-              <ListItemButton sx={{ pl: 4 }} key={route.slug} component={Link} href={`/forms/${route.slug}`}>
-                <ListItemText primary={route.component.displayName} />
-              </ListItemButton>
-            ))}
-          </List>
-        </Collapse>
-      </List></>}
+          {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
+            <ListItemButton key={text}>
+              <ListItemIcon>
+                {index % 2 === 0 ? <Inbox /> : <Mail />}
+              </ListItemIcon>
+              <ListItemText primary={text} />
+            </ListItemButton>
+          ))}
+        </List>
+        <Divider />
+        <List component="nav">
+          <ListItemButton onClick={handleFormsToggle}>
+            <ListItemIcon>
+              <ViewList />
+            </ListItemIcon>
+            <ListItemText primary="Formulários" />
+            <ExpandLess 
+              sx={{
+                transform: formsOpen ? 'rotate(-0deg)' : 'rotate(180deg)',
+                transition: theme => theme.transitions.create('transform', {
+                  duration: theme.transitions.duration.standard
+                })
+              }} 
+            />
+          </ListItemButton>
+          <Collapse in={formsOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {routes.sort((a,b) => a.slug.localeCompare(b.slug)).map(route => (
+                <ListItemButton sx={{ pl: 4 }} key={route.slug} component={Link} href={`/forms/${route.slug}`}>
+                  <ListItemText primary={route.component.displayName} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
+        </List>
+        {
+          user?.access_type === UserAccessType.Admnistrador &&
+          <>
+            <Divider />
+            <List 
+              component="nav"
+              aria-labelledby="nested-list-subheader"
+              subheader={
+                <ListSubheader component="div" id="nested-list-subheader">
+                  Administração
+                </ListSubheader>
+              }
+            >
+              <ListItemButton component={Link} href="/user-approval">
+              <ListItemIcon>
+                <Person />
+              </ListItemIcon>
+              <ListItemText primary="Gestão de Usuários"/>
+            </ListItemButton>
+            </List>
+          </>
+        }
+      </>}
     </div>
   );
 
   if (loading) {
     return (
-      <Container>
-        Carregando...
-      </Container>
+      <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'column', height: '100vh'}}>
+        <CircularProgress size={80}/>
+        <Typography sx={{ my: 4}} variant="h5">  
+          Carregando...
+        </Typography>
+      </Box>
     )
-  }
+  }''
 
   return (
     <Box sx={{ display: 'flex' }}>

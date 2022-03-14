@@ -7,13 +7,15 @@ import { Check, Close, Restore } from '@mui/icons-material'
 import { Unsubscribe } from '@firebase/util'
 import updateUserData from '@lib/services/updateUserData'
 import UserContext from '@lib/conxtexts/userContext'
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 
 interface UserApprovalPageProps {
   loading: boolean
 }
 
+
 const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
-  const [unapprovedUsers, setUnapprovedUsers] = useState<User[]>()
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [open, setOpen] = useState(false);
 
   const [currentUser, setCurrentUser] = useState<User>()
@@ -22,7 +24,7 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
   useEffect(() => {
     let unsubscribe: Unsubscribe = () => {};
     fetchUsers((users) => {
-      setUnapprovedUsers(users)
+      setAllUsers(users)
     }).then(result => {
       if (result.status === FetchUsersResultCodes.Success)
         unsubscribe = result.unsubscribe as Unsubscribe
@@ -77,6 +79,64 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
       type: UserType.Indefinido
     })
   }
+
+  const columns: GridColDef[] = [
+    {
+      field: 'email',
+      headerName: 'E-mail',
+      flex: 0.4
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 0.4,
+      valueGetter: (params) => (
+        `${UserStatus[params.row.status]}`
+      )
+    },
+    {
+      field: 'actions',
+      headerName: 'Ações',
+      flex: 0.1,
+      renderCell: (params) => {
+        switch (params.row.status) {
+          case UserStatus['Aprovado']:
+            return (
+              <Tooltip title="Reprovar">
+                <IconButton color="error" onClick={() => rejectUser(params.row)}>
+                  <Close />
+                </IconButton>
+              </Tooltip>
+            )
+          case UserStatus['Aguardando Aprovação']:
+            return (
+              <>
+                <Tooltip title="Aprovar">
+                  <IconButton color="success" onClick={() => openAcceptDialog(params.row)}>
+                    <Check />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Reprovar">
+                  <IconButton color="error" onClick={() => rejectUser(params.row)}>
+                    <Close />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )
+          case UserStatus['Reprovado']:
+            return (
+              <Tooltip title="Restaurar">
+                <IconButton color="warning" onClick={() => restoreUser(params.row)}>
+                  <Restore />
+                </IconButton>
+              </Tooltip>
+            )
+          default:
+            return (<></>)
+        }
+      }
+    }
+  ]
   
   if (loading) {
     return (
@@ -87,117 +147,15 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
   return (
     <Container maxWidth="xl">
       <Paper sx={{ p: 4 }}>
-        <Typography variant="h5">
-          Usuários Pendentes
+        <Typography variant="h5" gutterBottom>
+          Usuários Cadastrados
         </Typography>
-        <Divider />
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>E-mail</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {
-              unapprovedUsers?.filter(user => user.status === UserStatus['Aguardando Aprovação']).map((user, idx) => (
-                <TableRow key={user.uid}>
-                  <TableCell component="th" scope="row">
-                    {idx+1}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{UserStatus[user.status]}</TableCell>
-                  <TableCell>
-                    <Tooltip title="Aprovar">
-                      <IconButton color="success" onClick={() => openAcceptDialog(user)}>
-                        <Check />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Reprovar">
-                      <IconButton color="error" onClick={() => rejectUser(user)}>
-                        <Close />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            }
-          </TableBody>
-        </Table>
-
-        <Typography variant="h5" sx={{mt: 4}}>
-          Usuários Ativos
-        </Typography>
-        <Divider />
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>E-mail</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {
-              unapprovedUsers?.filter(user => user.status === UserStatus['Aprovado'] && user.email !== loggedUser?.email).map((user, idx) => (
-                <TableRow key={user.uid}>
-                  <TableCell component="th" scope="row">
-                    {idx+1}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{UserStatus[user.status]}</TableCell>
-                  <TableCell>
-                    <Tooltip title="Reprovar">
-                      <IconButton color="error" onClick={() => rejectUser(user)}>
-                        <Close />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            }
-          </TableBody>
-        </Table>
-
-        <Typography variant="h5" sx={{mt: 4}}>
-          Usuários Reprovados
-        </Typography>
-        <Divider />
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>E-mail</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {
-              unapprovedUsers?.filter(user => user.status === UserStatus['Reprovado']).map((user, idx) => (
-                <TableRow key={user.uid}>
-                  <TableCell component="th" scope="row">
-                    {idx+1}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{UserStatus[user.status]}</TableCell>
-                  <TableCell>
-                    <Tooltip title="Restaurar">
-                      <IconButton color="warning" onClick={() => restoreUser(user)}>
-                        <Restore />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            }
-          </TableBody>
-        </Table>
-
-        <Divider />
+        <DataGrid 
+          rows={allUsers.filter(user => user.email !== loggedUser?.email)}
+          columns={columns}
+          getRowId={row => row.uid}
+          autoHeight
+        />
       </Paper>
 
       <Dialog open={open} onClose={handleClose}>
