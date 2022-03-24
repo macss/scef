@@ -8,7 +8,9 @@ export enum ReadDataResultCodes {
   'ERROR'
 }
 
-export default async function readData<P extends keyof Database>(path: P, id: string) {
+type DatabaseKeys = Exclude<keyof Database, 'forms'>
+
+export default async function readData<P extends DatabaseKeys>(path: P, id: string) {
   const docRef = doc(firestore, path, id)
 
   try {

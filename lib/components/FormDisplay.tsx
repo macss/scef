@@ -42,10 +42,11 @@ export interface FormDisplayProps<T extends InputTypes> extends FormProps {
   title: string
   inputs: Record<string, InputPropsMapping[T] & { inputType: T }>
   errors?: Record<keyof FormDisplayProps<T>["inputs"], ErrorMessage> 
+  formId: string
 }
 
 const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
-  const { inputs, title, errors, ...rest } = props
+  const { formId, inputs, title, errors, ...rest } = props
   const [formInputs, setFormInputs] = useState<React.ReactNode[]>()
 
   useEffect(() => {
@@ -73,6 +74,7 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
                 labelId={id} 
                 name={inputName} 
                 error={(errors && errors[inputName]) ? true : undefined} 
+                defaultValue=""
               >
                 {
                   Object.entries(options).map(([name, value]) => 
@@ -134,6 +136,7 @@ const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {
               {input}
             </React.Fragment>
           ))}
+          <input value={formId} type="hidden" name="form_id" id="form_id"/>
         </form>
       </Paper>
     </Container>

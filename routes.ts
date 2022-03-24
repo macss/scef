@@ -1,5 +1,5 @@
 import { EmotionJSX } from "@emotion/react/types/jsx-namespace"
-import BarrierPass from "@lib/forms/BarrierPass"
+import BarrierPassForm from "@lib/forms/BarrierPassForm"
 
 type Route = {
   slug: string,
@@ -11,7 +11,7 @@ type Route = {
 
 const routes: Route[] = [{
   slug: 'barrier-pass',
-  component: BarrierPass
+  component: BarrierPassForm
 }]
 
 

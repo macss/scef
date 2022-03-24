@@ -1,7 +1,7 @@
 export enum UserAccessType {
   'Usuário',
   'Aprovador',
-  'Admnistrador'
+  'Administrador'
 } 
 
 export enum UserStatus {
@@ -22,4 +22,5 @@ export default interface User {
   status: UserStatus
   uid: string
   type: UserType
+  displayName: string
 }

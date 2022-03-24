@@ -9,7 +9,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const directory = path.join(process.cwd(), 'lib','forms')
   const filenames = await fs.readdir(directory)
 
-  const paths = filenames.map(filename => ({ params: { slug: slugify(filename.replace(/.tsx/, '')) } }))
+  const paths = filenames.map(filename => ({ params: { slug: slugify(filename.replace(/form.tsx/i, '')) } }))
 
   return { paths, fallback: false }
 }

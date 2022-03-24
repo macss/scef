@@ -128,7 +128,7 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
           </Collapse>
         </List>
         {
-          user?.access_type === UserAccessType.Admnistrador &&
+          user?.access_type === UserAccessType.Administrador &&
           <>
             <Divider />
             <List 
@@ -140,7 +140,7 @@ const MainLayout = ({ children }: React.PropsWithChildren<{}>) => {
                 </ListSubheader>
               }
             >
-              <ListItemButton component={Link} href="/user-approval">
+              <ListItemButton component={Link} href="/users/manage">
               <ListItemIcon>
                 <Person />
               </ListItemIcon>

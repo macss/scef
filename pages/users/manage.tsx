@@ -9,12 +9,12 @@ import updateUserData from '@lib/services/updateUserData'
 import UserContext from '@lib/conxtexts/userContext'
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 
-interface UserApprovalPageProps {
+interface ManageUsersPageProps {
   loading: boolean
 }
 
 
-const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
+const ManageUsersPage = ({ loading }: ManageUsersPageProps) => {
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [open, setOpen] = useState(false);
 
@@ -82,6 +82,11 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
 
   const columns: GridColDef[] = [
     {
+      field: 'displayName',
+      headerName: 'Nome',
+      flex: 0.4
+    },
+    {
       field: 'email',
       headerName: 'E-mail',
       flex: 0.4
@@ -93,6 +98,18 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
       valueGetter: (params) => (
         `${UserStatus[params.row.status]}`
       )
+    },
+    {
+      field: 'access_type',
+      headerName: 'Permissões de Usuário',
+      flex: 0.4,
+      valueGetter: params => `${UserAccessType[params.row.access_type]}`
+    },
+    {
+      field: 'type',
+      headerName: 'Tipo de Usuário',
+      flex: 0.4,
+      valueGetter: params => `${UserType[params.row.type]}`
     },
     {
       field: 'actions',
@@ -220,10 +237,10 @@ const UserApprovalPage = ({ loading }: UserApprovalPageProps) => {
   )
 }
 
-UserApprovalPage.displayName = 'Aprovar Usuários'
-UserApprovalPage.accessLevel = UserAccessType.Admnistrador
+ManageUsersPage.displayName = 'Gestão de Usuários'
+ManageUsersPage.accessLevel = UserAccessType.Administrador
 
-const UserApprovalWithAccessRestriction = withAccessRestricion(UserApprovalPage)
-UserApprovalWithAccessRestriction.displayName = UserApprovalPage.displayName
+const ManageUsersWithAccessRestriction = withAccessRestricion(ManageUsersPage)
+ManageUsersWithAccessRestriction.displayName = ManageUsersPage.displayName
 
-export default UserApprovalWithAccessRestriction
+export default ManageUsersWithAccessRestriction

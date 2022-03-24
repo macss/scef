@@ -39,7 +39,8 @@ const Login = () => {
                 access_type: UserAccessType['Usuário'],
                 status: UserStatus['Aguardando Aprovação'],
                 uid: user.uid,
-                type: UserType['Indefinido']
+                type: UserType['Indefinido'],
+                displayName: user.displayName || ''
               }, 'users')
             }
           })

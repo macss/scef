@@ -18,7 +18,6 @@ export async function fetchUsers(callback: (users: User[]) => void) {
       callback(users)
     })
 
-
     return {
       status: FetchUsersResultCodes.Success,
       unsubscribe

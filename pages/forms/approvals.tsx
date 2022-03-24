@@ -1,65 +1,147 @@
-import React from 'react'
-import { Container, Paper } from '@mui/material'
+import React, { useEffect, useState } from 'react'
+import { Container, Paper, Typography } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import withAccessRestricion from '@lib/hocs/withAccessRestriction';
-import { UserAccessType } from '@lib/models/user';
+import User, { UserAccessType } from '@lib/models/user';
+import fetchPendingForms, { FetchPendingFormsResultCodes } from '@lib/services/fetchPendingForms';
+import readData, { ReadDataResultCodes } from '@lib/services/readData';
+import BarrierPass from '@lib/models/barrierPass';
+import { FormApprovalStatus } from '@lib/models/database';
+import { Unsubscribe } from '@firebase/util';
+import { fetchUsers } from '@lib/services/fetchUsers';
 
-const columns: GridColDef[] = [
-  { field: 'id', headerName: 'ID', width: 90 },
-  {
-    field: 'firstName',
-    headerName: 'First name',
-    width: 150,
-    editable: true,
-  },
-  {
-    field: 'lastName',
-    headerName: 'Last name',
-    width: 150,
-    editable: true,
-  },
-  {
-    field: 'age',
-    headerName: 'Age',
-    type: 'number',
-    width: 110,
-    editable: true,
-  },
-  {
-    field: 'fullName',
-    headerName: 'Full name',
-    description: 'This column has a value getter and is not sortable.',
-    sortable: false,
-    width: 160,
-    valueGetter: (params) =>
-      `${params.row.firstName || ''} ${params.row.lastName || ''}`,
-  },
-];
+const getColumns = (users: User[]) => {
+  const columns: GridColDef[] = [
+    {
+      field: 'form_id',
+      headerName: 'Formulário',
+      flex: .6,
+      valueGetter: params => {
+        switch (params.row.form_id) {
+          case 'barrierPass':
+            return 'Passe de Barreira'
+          default:
+            return 'Formulário Desconhecido'
+        }
+      }
+    },
+    {
+      field: 'created_at',
+      headerName: 'Data de Criação',
+      flex: .6,
+      valueGetter: params => (new Date(params.row.created_at.seconds * 1000)).toLocaleString()
+    },
+    { 
+      field: 'destinatario', 
+      headerName: 'Destinatário', 
+      flex: 1,
+      renderCell: (params) => {
+        const { displayName: name, email } = users.find(user => user.uid === params.row.destinatario) || { displayName: '', email: '' }
+        return (
+          <div style={{ overflowY: 'auto', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
+            <Typography variant="body2">
+              {name}
+            </Typography>
+            <Typography variant="body2"> 
+              {email}
+            </Typography>
+          </div>
+        )
+      }
+    },
+    { 
+      field: 'solicitante', 
+      headerName: 'Solicitante', 
+      flex: 1,
+      valueGetter: (params) => {
+        const { displayName: name } = users.find(user => user.uid === params.row.solicitante) || { displayName: '' }
+        return name
+      }
+    },
+    { 
+      field: 'materiais', 
+      headerName: 'Materiais', 
+      flex: 0.8,
+      renderCell: (params) => {
+        return (
+          <div style={{ overflowY: 'auto', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 1 }}>
+            {params.row.materiais.map((lista: BarrierPass['materiais'][number], idx: number) => (
+              <Typography key={idx} variant="body2">
+                {`${lista.qty}x ${lista.material}`}
+                <br />
+              </Typography>
+            ))}
+          </div>
+        )
+      }
+    },
+    { 
+      field: 'observacoes', 
+      headerName: 'Observações', 
+      flex: 1,
+      renderCell: (params) => {
+        return (
+          <div style={{ overflowY: 'auto', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 1 }}>
+            <Typography variant="body2">
+              {params.row.observacoes}
+            </Typography>
+          </div>
+        )
+      }
+    },
+    { 
+      field: 'status', 
+      headerName: 'Status', 
+      flex: 1,
+      valueGetter: (params) => FormApprovalStatus[params.row.status]
+    },
+    { 
+      field: 'uid', 
+      headerName: 'Ações', 
+      flex: 0.5
+    },
+  ];
 
-const rows = [
-  { id: 1, lastName: 'Snow', firstName: 'Jon', age: 35 },
-  { id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42 },
-  { id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 45 },
-  { id: 4, lastName: 'Stark', firstName: 'Arya', age: 16 },
-  { id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null },
-  { id: 6, lastName: 'Melisandre', firstName: null, age: 150 },
-  { id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
-  { id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36 },
-  { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
-];
+  return columns
+}
 
 const Approvals = () => {
+  const [pendingForms, setPendingForms] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
+
+  useEffect(() => {
+    let unsubscribe: Unsubscribe = () => {}
+
+    fetchPendingForms((forms) => setPendingForms(forms))
+      .then(result => {
+        unsubscribe = result.unsubscribe ?? unsubscribe
+      })
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    let unsubscribe: Unsubscribe = () => {}
+
+    fetchUsers(users => setUsers(users))
+      .then(result => {
+        unsubscribe = result.unsubscribe ?? unsubscribe
+      })
+
+    return unsubscribe
+  })
+
   return (
-    <Container>
+    <Container maxWidth="xl">
       <Paper sx={{ p:2 }}>
         <DataGrid
-          rows={rows}
-          columns={columns}
+          rows={pendingForms}
+          columns={getColumns(users)}
           pageSize={5}
           rowsPerPageOptions={[5]}
-          checkboxSelection
           disableSelectionOnClick
           autoHeight
+          getRowId={row => row.uid}
         />
       </Paper>
     </Container>
