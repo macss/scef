@@ -22,6 +22,7 @@ import {
 import Head from 'next/head';
 
 import { SxProps, Theme } from '@mui/material/styles';
+import Database from '@lib/models/database';
 
 export type InputTypes = 'select' | 'button' | 'text-field' // | 'checkbox' | 'radio' |
 
@@ -42,7 +43,7 @@ export interface FormDisplayProps<T extends InputTypes> extends FormProps {
   title: string
   inputs: Record<string, InputPropsMapping[T] & { inputType: T }>
   errors?: Record<keyof FormDisplayProps<T>["inputs"], ErrorMessage> 
-  formId: string
+  formId: keyof Database['forms']
 }
 
 const FormDisplay = <T extends InputTypes>(props: FormDisplayProps<T>) => {

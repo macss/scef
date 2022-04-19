@@ -140,7 +140,7 @@ const BarrierPassForm = () => {
       inputs={inputs}
       onSubmit={handleSubmit}
       errors={errors}
-      formId="barrierPass"
+      formId="barrier_pass"
     />
   )
 };

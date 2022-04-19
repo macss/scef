@@ -8,7 +8,7 @@ export enum FetchPendingFormsResultCodes {
 }
 
 export default async function fetchPendingForms(callback: (forms: any[]) => void) {
-  const pendingFormsRef = query(collectionGroup(firestore, 'responses'), where('status', '==', FormApprovalStatus["Aguardando Aprovação"]))
+  const pendingFormsRef = query(collectionGroup(firestore, 'responses'), where('status', '!=', FormApprovalStatus["Reprovado"]))
 
   try {
     const unsubscribe = onSnapshot(pendingFormsRef, querySnapshot => {

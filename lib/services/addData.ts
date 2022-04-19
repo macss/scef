@@ -9,7 +9,7 @@ export enum AddDataResultCodes {
 
 type FormPaths = keyof Database['forms']
 type DatabaseKeys = Exclude<keyof Database, 'forms'>
-type DataType<P> = P extends FormPaths ? Omit<Database['forms'][P][string], 'created_at'> : P extends DatabaseKeys ? Database[P][string] : never
+type DataType<P> = P extends FormPaths ? Omit<Database['forms'][P]['responses'][string], 'created_at'> : P extends DatabaseKeys ? Database[P][string] : never
 
 export default async function addData<P extends (DatabaseKeys | FormPaths)>(data: DataType<P>, path: P) {
   let newDataRef: DocumentReference

@@ -8,16 +8,32 @@ export enum FormApprovalStatus {
   "Reprovado"
 }
 
+type Historico = {
+  userId: string,
+  date: {
+    seconds: number,
+    nanoseconds: number
+  }
+}
+
 export type FormCommon = {
   created_at: { seconds: number, nanoseconds: number }
-  form_id: string
+  form_id: keyof Database['forms']
   solicitante: string
   status: FormApprovalStatus
+  historico?: {
+    'aprovacao_gestor'?: Historico,
+    'recebimento_prestador'?: Historico,
+    'cancelamento'?: Historico
+  }
+  uid: string
 }
 
 export default interface Database {
   users: Record<string, User>,
   forms: {
-    barrier_pass: Record<string, BarrierPass>
+    barrier_pass: {
+      responses: Record<string, BarrierPass>
+    }
   }
 }
